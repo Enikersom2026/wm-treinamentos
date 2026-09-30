@@ -1,0 +1,37 @@
+{
+  "short_name": "WM Treinamentos",
+  "name": "WM Treinamentos - Clube de Tiro",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-icon.png",
+      "type": "image/png",
+      "sizes": "1024x1024",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0e140d",
+  "theme_color": "#182216",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "description": "Portal do Cliente WM Treinamentos Clube de Tiro: Agendamentos, Cursos e Avisos"
+}

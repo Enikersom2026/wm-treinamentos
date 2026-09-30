@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WM Treinamentos - Painel Admin Master</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --militar: #4B5320; --preto: #111111; --vermelho: #CC0000; --laranja: #FF6600; --bg: #1A1C14; --texto: #E6E8EA; --sucesso: #2e7d32; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: var(--texto); }
+        .card { background: var(--preto); padding: 25px; border-radius: 8px; border: 1px solid var(--militar); max-width: 600px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+        h2 { color: var(--laranja); text-align: center; margin-top: 0; border-bottom: 2px solid var(--militar); padding-bottom: 10px; text-transform: uppercase; font-size: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; background: #222; border: 1px solid var(--militar); border-radius: 4px; box-sizing: border-box; color: #fff; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: var(--militar); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 5px; text-transform: uppercase; }
+        button:hover { background: #5c6628; }
+        .btn-danger { background: var(--vermelho); }
+        .btn-success { background: var(--sucesso); }
+        .item-list { background: #1c1d1a; padding: 12px; border-radius: 4px; margin-bottom: 10px; border: 1px solid var(--militar); font-size: 14px; }
+        
+        /* Cores dinâmicas para os cards conforme o status real do banco */
+        .status-confirmado { border-left: 5px solid var(--sucesso) !important; }
+        .status-aguardando { border-left: 5px solid var(--laranja) !important; background: #182212 !important; }
+        .status-cancelamento { border-left: 5px solid var(--vermelho) !important; background: #221212 !important; }
+        
+        fieldset { border: 1px solid var(--militar); padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        legend { font-weight: bold; color: var(--laranja); text-transform: uppercase; font-size: 12px; padding: 0 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="a-login" class="card" style="max-width: 450px;">
+        <h2>Painel Administrativo Master</h2>
+        <form onsubmit="event.preventDefault(); document.getElementById('a-login').style.display='none'; document.getElementById('a-dashboard').style.display='block'; app.carregarTelaAdmin();">
+            <div class="form-group"><label>Identificador</label><input type="email" value="admin@clube.com" required></div>
+            <div class="form-group"><label>Senha</label><input type="password" value="123" required></div>
+            <button type="submit">Liberar Acesso</button>
+        </form>
+    </div>
+
+    <div id="a-dashboard" class="card" style="display:none;">
+        <h2>Controle Operacional do Clube</h2>
+        
+        <fieldset>
+            <legend>⚙️ Configuração da Empresa / Logo</legend>
+            <div class="form-group"><label>Carregar Logotipo do Clube (Galeria)</label><input type="file" id="adm-logo-file" accept="image/*" style="background:#222; padding:8px;" onchange="app.uploadLogoEmpresa(this)"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>💰 Finanças e QR Code PIX</legend>
+            <div class="form-group"><label>Texto da Chave PIX</label><input type="text" id="adm-pix" placeholder="Ex: CNPJ do Clube"></div>
+            <div class="form-group"><label>Imagem do QR Code PIX (Galeria)</label><input type="file" id="adm-pix-file" accept="image/*" style="background:#222; padding:8px;" onchange="app.uploadQRCodeGaleria(this)"></div>
+            <button type="button" onclick="app.salvarPixBanco()" style="background:var(--militar); color:white; font-size:12px; padding:8px;">Salvar Dados PIX no Banco</button>
+        </fieldset>
+
+        <!-- 📥 MONITOR DE AGENDAMENTOS CORRIGIDO SEM DADOS FIXOS -->
+        <fieldset>
+            <legend>📥 Monitor de Agendamentos Recebidos / Cancelamentos</legend>
+            <div id="adm-lista-agendamentos"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>👥 Clientes Cadastrados (Gestão de Perfis)</legend>
+            <div id="adm-lista-clientes"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>📢 Central de Banners e Vídeos Instantâneos</legend>
+            <div class="form-group">
+                <label>Selecionar Mídia da Galeria (Vídeo .mp4 ou Fotos)</label>
+                <input type="file" id="adm-galeria-input" accept="video/mp4,image/*" style="background:#222; padding:8px;" onchange="app.adicionarAoCarrossel(this)">
+                <button type="button" onclick="app.limparCarrossel()" class="btn-danger" style="font-size:11px; padding:6px; margin-top:5px; width:auto;">Limpar Banners</button>
+            </div>
+        </fieldset>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAT7Xwlvn4X5u5VSfkh-FtsG9uCBRfBC3U",
+            authDomain: "gen-lang-client-0429825474.firebaseapp.com",
+            projectId: "gen-lang-client-0429825474",
+            storageBucket: "gen-lang-client-0429825474.firebasestorage.app",
+            messagingSenderId: "504636045231",
+            appId: "1:504636045231:web:9f925759e75d0d5e36a15a"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const dbFirestore = firebase.app().firestore("ai-studio-wmtreinamentosre-292c1cba-eb7a-4fcd-ac2b-17343f08c282");
+
+        const canalP2P = new BroadcastChannel('wm_treinamentos_marketing');
+        let listaBannersLocal = [];
+
+        const app = {
+            uploadLogoEmpresa: function(input) {
+                if (input.files.length === 0) return;
+                const reader = new FileReader(); reader.readAsDataURL(input.files[0]);
+                reader.onload = function () { 
+                    canalP2P.postMessage({ tipo: 'logo', conteudo: reader.result }); 
+                    alert('Logo atualizada via transmissão local!'); 
+                };
+            },
+
+            uploadQRCodeGaleria: function(input) {
+                if (input.files.length === 0) return;
+                const txtChave = document.getElementById('adm-pix').value.trim();
+                const reader = new FileReader(); reader.readAsDataURL(input.files[0]);
+                reader.onload = function () { 
+                    canalP2P.postMessage({ tipo: 'qrcode', chave: txtChave, conteudo: reader.result }); 
+                    dbFirestore.collection('settings').doc('bank').set({
+                        pixKey: txtChave,
+                        qrcodeUrl: reader.result,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true }).catch(console.error);
+                    alert('QR Code enviado e gravado!'); 
+                };
+            },
+
+            salvarPixBanco: function() {
+                const txtChave = document.getElementById('adm-pix').value.trim();
+                if (!txtChave) {
+                    alert('Informe a Chave PIX.');
+                    return;
+                }
+                dbFirestore.collection('settings').doc('bank').set({
+                    pixKey: txtChave,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).then(() => {
+                    canalP2P.postMessage({ tipo: 'qrcode', chave: txtChave, conteudo: '' });
+                    alert('Chave PIX atualizada no banco de dados!');
+                }).catch(err => alert('Erro: ' + err.message));
+            },
+
+            adicionarAoCarrossel: function(input) {
+                if (input.files.length === 0) return;
+                const file = input.files[0]; const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = function () {
+                    const tipoMidia = file.type.includes('video') ? 'video' : 'foto';
+                    listaBannersLocal.push({ tipo: tipoMidia, src: reader.result });
+                    canalP2P.postMessage({ tipo: 'marketing', banners: listaBannersLocal }); 
+                    
+                    // Also save banner list to firestore
+                    const arrayUrls = listaBannersLocal.map(b => b.src);
+                    dbFirestore.collection('settings').doc('marketing').set({
+                        bannerImages: arrayUrls,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true }).catch(console.error);
+
+                    alert('Mídia publicada!');
+                };
+            },
+
+            limparCarrossel: function() { 
+                listaBannersLocal = []; 
+                canalP2P.postMessage({ tipo: 'marketing', banners: [] }); 
+                dbFirestore.collection('settings').doc('marketing').set({
+                    bannerImages: [],
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).catch(console.error);
+                alert('Carrossel limpo!'); 
+            },
+
+            carregarTelaAdmin: function() {
+                // Monitoramento dinâmico no Firestore (suporta "schedules" e "agendamentos")
+                const escutarColecao = (nomeColecao) => {
+                    dbFirestore.collection(nomeColecao).onSnapshot((snapshot) => {
+                        const box = document.getElementById('adm-lista-agendamentos'); 
+                        box.innerHTML = '';
+                        if (snapshot.empty) { 
+                            box.innerHTML = '<p style="font-size:12px;color:#7f8c8d;">Nenhum agendamento pendente ou ativo.</p>'; 
+                            return; 
+                        }
+                        
+                        snapshot.forEach((doc) => {
+                            const ag = doc.data();
+                            
+                            const dataRaw = ag.date || ag.data || '';
+                            let dataBR = dataRaw;
+                            if (dataRaw) {
+                                if (dataRaw.includes('-')) {
+                                    const p = dataRaw.split('-'); 
+                                    if (p.length === 3) dataBR = `${p[2]}/${p[1]}/${p[0]}`;
+                                } else if (dataRaw.includes('/')) {
+                                    const p = dataRaw.split('/');
+                                    if (p.length === 3 && (p[0].length === 4 || parseInt(p[0]) > 31)) {
+                                        dataBR = `${p[2]}/${p[1]}/${p[0]}`;
+                                    }
+                                }
+                            }
+
+                            const clientName = ag.clientName || ag.clienteNome || ag.name || 'Atirador';
+                            const clientCpf = ag.clientCpf || ag.clienteCpf || ag.cpf || '';
+                            const shift = ag.shift || ag.turno || '';
+                            const status = ag.status || 'Pendente';
+
+                            let classeCard = "status-confirmado";
+                            let textoAviso = `Solicitou ${shift} em ${dataBR}`;
+                            let botoesAcao = `
+                                <div style="display:flex; gap:8px; margin-top:8px;">
+                                    <button class="btn-success" style="padding:6px; font-size:11px; width:auto; margin:0;" onclick="dbFirestore.collection('${nomeColecao}').doc('${doc.id}').update({status: 'Aprovado'})">Aprovar</button>
+                                    <button class="btn-danger" style="padding:6px; font-size:11px; width:auto; margin:0;" onclick="dbFirestore.collection('${nomeColecao}').doc('${doc.id}').update({status: 'Cancelado'})">Cancelar</button>
+                                    <button class="btn-danger" style="padding:6px; font-size:11px; width:auto; margin:0; background:#555;" onclick="dbFirestore.collection('${nomeColecao}').doc('${doc.id}').delete()">Excluir</button>
+                                </div>`;
+
+                            if (status === 'Pendente' || status === 'Aguardando Confirmação') {
+                                classeCard = "status-aguardando";
+                                textoAviso = `Novo Agendamento: Solicitou vaga no turno ${shift} para ${dataBR}`;
+                            } else if (status === 'Cancelamento Solicitado' || status === 'Cancelado') {
+                                classeCard = "status-cancelamento";
+                                textoAviso = `Status: ${status} | Treino de ${dataBR} (${shift})`;
+                            }
+
+                            box.innerHTML += `
+                                <div class="item-list ${classeCard}">
+                                    <strong>👤 Cliente:</strong> ${clientName} (${clientCpf})<br>
+                                    <strong>📢 Detalhes:</strong> ${textoAviso}<br>
+                                    <strong>📌 Status:</strong> ${status}<br>
+                                    ${botoesAcao}
+                                </div>
+                            `;
+                        });
+                    }, err => console.error(err));
+                };
+
+                escutarColecao('schedules');
+
+                // Carregar lista de clientes
+                dbFirestore.collection('clients').onSnapshot((snapshot) => {
+                    const boxC = document.getElementById('adm-lista-clientes');
+                    boxC.innerHTML = '';
+                    if (snapshot.empty) {
+                        boxC.innerHTML = '<p style="font-size:12px;color:#7f8c8d;">Nenhum cliente cadastrado.</p>';
+                        return;
+                    }
+                    snapshot.forEach((doc) => {
+                        const c = doc.data();
+                        boxC.innerHTML += `
+                            <div class="item-list">
+                                <strong>👤 Nome:</strong> ${c.name || 'Sem nome'}<br>
+                                <strong>🪪 CPF:</strong> ${c.cpf || 'N/A'}<br>
+                                <strong>📱 Tel:</strong> ${c.phone || c.whatsapp || 'N/A'}<br>
+                                <strong>🏬 Loja Parceira:</strong> ${c.partnerStore || c.partner || 'Direto'}
+                            </div>
+                        `;
+                    });
+                });
+            }
+        };
+    </script>
+</body>
+</html>

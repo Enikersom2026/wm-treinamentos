@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+:root {
+  --verde-militar-dark: #161e14;
+  --verde-militar: #263522;
+  --verde-militar-mid: #384d32;
+  --verde-militar-light: #4c6944;
+  --vermelho: #dc2626;
+  --laranja: #ea580c;
+  --preto: #090d08;
+}
+
+body {
+  background-color: #0d120c;
+  color: #f1f5f9;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.carousel-container {
+  width: 100%;
+  max-width: 1200px; /* Largura máxima do seu banner */
+  margin: 0 auto;
+  overflow: hidden; /* Esconde os banners que não estão ativos */
+  position: relative;
+  border-radius: 12px; /* Cantos arredondados */
+}
+
+.carousel-slide {
+  display: flex;
+  width: 100%;
+  transition: transform 0.5s ease-in-out; /* Suavidade na transição */
+}
+
+.carousel-image {
+  width: 100%;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+

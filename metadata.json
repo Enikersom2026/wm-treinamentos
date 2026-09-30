@@ -1,0 +1,6 @@
+{
+  "name": "Clube de Tiro - Área do Cliente",
+  "description": "Portal do cliente para clube de tiro com login, cadastro, agendamento de estande, cancelamento, promoções e avisos legais.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "settings": {
+      "title": "Settings",
+      "description": "System settings including company, bank, and marketing configurations",
+      "properties": {
+        "name": { "type": "string" },
+        "pixKey": { "type": "string" },
+        "bank": { "type": "string" },
+        "agencyAccount": { "type": "string" },
+        "bannerText": { "type": "string" },
+        "noticesText": { "type": "string" }
+      }
+    },
+    "agendamentos": {
+      "title": "Agendamentos",
+      "description": "Range training / shooting appointments",
+      "properties": {
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "lojaIndicou": { "type": "string" },
+        "date": { "type": "string" },
+        "shift": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userName", "date", "shift", "status"]
+    },
+    "instrutores": {
+      "title": "Instrutores",
+      "description": "Shooting instructors list",
+      "properties": {
+        "name": { "type": "string" },
+        "iatNumber": { "type": "string" }
+      },
+      "required": ["name", "iatNumber"]
+    },
+    "clientes": {
+      "title": "Clientes",
+      "description": "Registered shooters/clients",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "cpf": { "type": "string" },
+        "phone": { "type": "string" },
+        "referredByStore": { "type": "string" },
+        "crNumber": { "type": "string" },
+        "crValidity": { "type": "string" }
+      }
+    },
+    "notificacoes_clientes": {
+      "title": "Notificações de Clientes",
+      "description": "Alertas e notificações de alteração de status de agendamentos",
+      "properties": {
+        "bookingId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "date": { "type": "string" },
+        "shift": { "type": "string" },
+        "oldStatus": { "type": "string" },
+        "newStatus": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "read": { "type": "boolean" },
+        "adminNote": { "type": "string" }
+      },
+      "required": ["bookingId", "newStatus", "createdAt", "read"]
+    }
+  }
+}

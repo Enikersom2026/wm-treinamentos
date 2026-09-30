@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WM Treinamentos - Área do Atirador</title>
+    
+    <!-- Scripts Oficiais do Firebase Core e Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root { 
+            --militar: #4B5320; --preto: #111111; --vermelho: #CC0000; 
+            --laranja: #FF6600; --bg: #1A1C14; --texto: #E6E8EA; --sucesso: #2e7d32; 
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: var(--texto); }
+        .card { background: var(--preto); padding: 25px; border-radius: 8px; border: 1px solid var(--militar); max-width: 500px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+        .app-header { text-align: center; margin-bottom: 20px; }
+        .app-logo { max-width: 120px; max-height: 120px; object-fit: contain; display: none; margin: 0 auto; border-radius: 4px; }
+        h2 { color: var(--laranja); text-align: center; margin-top: 0; border-bottom: 2px solid var(--militar); padding-bottom: 10px; text-transform: uppercase; font-size: 20px; }
+        h3 { color: var(--texto); margin-top: 20px; border-bottom: 1px solid var(--militar); padding-bottom: 5px; text-transform: uppercase; font-size: 16px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; background: #222; border: 1px solid var(--militar); border-radius: 4px; box-sizing: border-box; color: #fff; font-size: 14px; }
+        input:focus, select:focus { border-color: var(--laranja); outline: none; }
+        button { width: 100%; padding: 12px; background: var(--militar); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 5px; text-transform: uppercase; }
+        button:hover { background: #5c6628; }
+        .btn-danger { background: var(--vermelho); }
+        .carousel-container { width: 100%; max-width: 500px; margin: 0 auto 20px auto; overflow: hidden; position: relative; border-radius: 6px; border: 1px solid var(--laranja); display: none; }
+        .carousel-slide { display: flex; width: 100%; transition: transform 0.5s ease-in-out; }
+        .carousel-item { min-width: 100%; height: 250px; background: #000; color: var(--laranja); box-sizing: border-box; text-align: center; font-weight: bold; font-size: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .carousel-item img, .carousel-item video { width: 100%; height: 100%; object-fit: cover; }
+        .item-list { background: #1c1d1a; padding: 12px; border-radius: 4px; margin-bottom: 10px; border: 1px solid var(--militar); font-size: 14px; }
+        .pix-container { background: #141f17; border: 1px solid var(--sucesso); padding: 15px; border-radius: 6px; text-align: center; margin-top: 20px; display: none; }
+        .pix-container img { max-width: 140px; margin-top: 10px; background: white; padding: 5px; border-radius: 4px; }
+        .link-footer { text-align: center; margin-top: 15px; font-size: 14px; }
+        .link-footer a { color: var(--laranja); font-weight: bold; text-decoration: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="app-header"><img src="" id="img-app-logo" class="app-logo" alt="Logo"></div>
+
+    <div id="c-login" class="card">
+        <h2>Acesso do Atirador</h2>
+        <form onsubmit="app.loginCliente(event)">
+            <div class="form-group"><label>CPF Cadastrado</label><input type="text" id="l-email" placeholder="Apenas números" required></div>
+            <div class="form-group"><label>Senha</label><input type="password" id="l-senha" value="123" required></div>
+            <button type="submit">Entrar no Sistema</button>
+        </form>
+        <div class="link-footer">Primeira vez? <a onclick="showView('c-cadastro')">Cadastre-se Aqui</a></div>
+    </div>
+
+    <div id="c-cadastro" class="card" style="display:none;">
+        <h2>Ficha de Cadastro CAC</h2>
+        <form onsubmit="app.cadastrarCliente(event)">
+            <div class="form-group"><label>Nome Completo</label><input type="text" id="cad-nome" required placeholder="Seu nome completo"></div>
+            <div class="form-group"><label>E-mail (Para Login)</label><input type="email" id="cad-email" required placeholder="seu@email.com"></div>
+            <div class="form-group"><label>Senha (Mínimo 6 caracteres)</label><input type="password" id="cad-senha" required minlength="6" placeholder="******"></div>
+            <div class="form-group"><label>CPF (Apenas números)</label><input type="text" id="cad-cpf" required placeholder="00000000000"></div>
+            <div class="form-group"><label>WhatsApp</label><input type="tel" id="cad-tel" required placeholder="(00) 90000-0000"></div>
+            <button type="submit">Gravar Informações</button>
+        </form>
+        <div class="link-footer"><a onclick="showView('c-login')">Voltar ao Login</a></div>
+    </div>
+
+    <div id="c-main" class="card" style="display:none;">
+        <div id="c-carousel" class="carousel-container"><div id="carousel-slide" class="carousel-slide"></div></div>
+        <h2>Agendar Raia de Treino</h2>
+        <form onsubmit="app.criarAgendamento(event)">
+            <div class="form-group">
+                <label>Data do Treinamento</label>
+                <input type="date" id="ag-data" required onchange="app.verificarTurnosDisponiveis(this.value)">
+            </div>
+            <div class="form-group">
+                <label>Turno Operacional</label>
+                <select id="ag-turno" required>
+                    <option value="">Selecione a data primeiro...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Loja que Indicou (Opcional)</label>
+                <input type="text" id="ag-loja-indicou" placeholder="Digite a loja que indicou...">
+            </div>
+            <button type="submit">Solicitar Vaga de Treino</button>
+        </form>
+
+        <div id="c-pix-area" class="pix-container">
+            <strong style="color: #a3cfbb;">🎯 PAGAMENTO VIA PIX</strong><br>
+            <span style="font-size:12px;">Chave: <span id="c-pix-chave" style="color:var(--laranja)"></span></span><br>
+            <img id="img-c-qrcode" src="" alt="QR Code PIX">
+        </div>
+
+        <h3>Seus Treinos</h3>
+        <div id="c-meus-agendamentos"></div>
+        <button onclick="app.logout()" class="btn-danger" style="margin-top: 30px;">Sair da Conta</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAT7Xwlvn4X5u5VSfkh-FtsG9uCBRfBC3U",
+            authDomain: "gen-lang-client-0429825474.firebaseapp.com",
+            projectId: "gen-lang-client-0429825474",
+            storageBucket: "gen-lang-client-0429825474.firebasestorage.app",
+            messagingSenderId: "504636045231",
+            appId: "1:504636045231:web:9f925759e75d0d5e36a15a"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const dbFirestore = firebase.app().firestore("ai-studio-wmtreinamentosre-292c1cba-eb7a-4fcd-ac2b-17343f08c282");
+
+        let usuarioLogado = null;
+        let carouselInterval = null;
+        let travaCarrosselVideo = false;
+
+        function showView(viewId) {
+            ['c-login', 'c-cadastro', 'c-main'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = id === viewId ? 'block' : 'none';
+            });
+        }
+
+        const canalP2P = new BroadcastChannel('wm_treinamentos_marketing');
+        canalP2P.onmessage = function(evento) {
+            const dados = evento.data;
+            if(dados.tipo === 'logo') { document.getElementById('img-app-logo').src = dados.conteudo; document.getElementById('img-app-logo').style.display = 'block'; }
+            if(dados.tipo === 'qrcode') { document.getElementById('c-pix-chave').innerText = dados.chave; document.getElementById('img-c-qrcode').src = dados.conteudo; document.getElementById('c-pix-area').style.display = 'block'; }
+            if(dados.tipo === 'marketing') { renderizarCarrosselCliente(dados.banners); }
+        };
+
+        function carregarConfiguracoesEmpresa() {
+            dbFirestore.collection('settings').doc('marketing').get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.bannerImages && data.bannerImages.length > 0) {
+                        renderizarCarrosselCliente(data.bannerImages.map(img => ({ tipo: 'image', src: img })));
+                    }
+                }
+            }).catch(console.error);
+
+            dbFirestore.collection('settings').doc('bank').get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.pixKey) {
+                        document.getElementById('c-pix-chave').innerText = data.pixKey;
+                        if (data.qrcodeUrl) {
+                            document.getElementById('img-c-qrcode').src = data.qrcodeUrl;
+                        }
+                        document.getElementById('c-pix-area').style.display = 'block';
+                    }
+                }
+            }).catch(console.error);
+        }
+
+        function renderizarCarrosselCliente(banners) {
+            const slide = document.getElementById('carousel-slide'); const wrapper = document.getElementById('c-carousel');
+            if(carouselInterval) clearInterval(carouselInterval);
+            slide.style.transform = "translateX(0%)"; slide.innerHTML = ''; travaCarrosselVideo = false;
+            if(banners && banners.length > 0) {
+                banners.forEach(item => {
+                    if(item.tipo === 'video') { travaCarrosselVideo = true; slide.innerHTML += `<div class="carousel-item"><video src="${item.src || item}" controls autoplay muted loop playsinline></video></div>`; }
+                    else { slide.innerHTML += `<div class="carousel-item"><img src="${item.src || item}"></div>`; }
+                });
+                wrapper.style.display = 'block'; iniciarCarrossel();
+            } else { wrapper.style.display = 'none'; }
+        }
+
+        function iniciarCarrossel() {
+            const slide = document.getElementById('carousel-slide'); const itens = document.querySelectorAll('.carousel-item');
+            let c = 0; if(itens.length <= 1 || travaCarrosselVideo) return;
+            carouselInterval = setInterval(() => { c++; if(c >= itens.length) c = 0; slide.style.transform = `translateX(${-100 * c}%)`; }, 7000);
+        }
+
+        function formatarDataBR(dataStr) {
+            if (!dataStr) return '';
+            if (dataStr.includes('-')) {
+                const p = dataStr.split('-');
+                if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+            } else if (dataStr.includes('/')) {
+                const p = dataStr.split('/');
+                if (p.length === 3 && (p[0].length === 4 || parseInt(p[0]) > 31)) {
+                    return `${p[2]}/${p[1]}/${p[0]}`;
+                }
+            }
+            return dataStr;
+        }
+
+        const app = {
+            verificarTurnosDisponiveis: function(dataSelecionada) {
+                const selectTurno = document.getElementById('ag-turno');
+                if (!dataSelecionada) {
+                    selectTurno.innerHTML = '<option value="">Selecione a data primeiro...</option>';
+                    return;
+                }
+                selectTurno.innerHTML = '<option value="">Analisando raias livres...</option>';
+
+                dbFirestore.collection('schedules').where('date', '==', dataSelecionada).get().then((snapshot) => {
+                    const turnosOcupados = [];
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        if (d.status !== 'Cancelado' && d.status !== 'Cancelamento Solicitado') {
+                            turnosOcupados.push(d.shift);
+                        }
+                    });
+
+                    const todosTurnos = [
+                        "Manhã (08:00 às 12:00)",
+                        "Tarde (13:00 às 18:00)",
+                        "Noite (18:00 às 21:00)"
+                    ];
+
+                    selectTurno.innerHTML = '<option value="">Selecione o período...</option>';
+                    todosTurnos.forEach(t => {
+                        const ocupado = turnosOcupados.some(oc => oc === t || oc.includes(t) || t.includes(oc));
+                        if (ocupado) {
+                            selectTurno.innerHTML += `<option value="${t}" disabled style="color: #ff3333; background-color: #330000; font-weight: bold;">⛔ ${t} - INDISPONÍVEL</option>`;
+                        } else {
+                            selectTurno.innerHTML += `<option value="${t}">${t}</option>`;
+                        }
+                    });
+                }).catch(err => {
+                    console.error('Erro ao buscar turnos:', err);
+                    selectTurno.innerHTML = '<option value="">Erro ao carregar turnos</option>';
+                });
+            },
+            loginCliente: function(e) {
+                e.preventDefault();
+                const cpf = document.getElementById('l-email').value.trim();
+                dbFirestore.collection('clients').where('cpf', '==', cpf).get().then(snap => {
+                    if (!snap.empty) {
+                        usuarioLogado = snap.docs[0].data();
+                        showView('c-main');
+                        carregarConfiguracoesEmpresa();
+                        this.carregarAgendamentos();
+                    } else {
+                        alert('Atirador não localizado com este CPF. Realize o cadastro.');
+                        showView('c-cadastro');
+                    }
+                }).catch(err => alert('Erro no login: ' + err.message));
+            },
+            cadastrarCliente: function(e) {
+                e.preventDefault();
+                const email = document.getElementById('cad-email').value.trim();
+                const senha = document.getElementById('cad-senha').value;
+                const nome = document.getElementById('cad-nome').value.trim();
+                const cpf = document.getElementById('cad-cpf').value.trim();
+                const phone = document.getElementById('cad-tel').value.trim();
+
+                if (senha.length < 6) {
+                    alert('A senha deve ter no mínimo 6 caracteres para o Firebase Authentication.');
+                    return;
+                }
+
+                const novo = {
+                    name: nome,
+                    email: email,
+                    password: senha,
+                    cpf: cpf,
+                    phone: phone,
+                    partnerStore: '',
+                    createdAt: new Date().toISOString()
+                };
+
+                const saveToFirestore = () => {
+                    dbFirestore.collection('clients').add(novo).then(() => {
+                        alert('Cadastro realizado com sucesso! E-mail salvo no Firebase Authentication.');
+                        showView('c-login');
+                    }).catch(err => alert('Erro ao salvar dados no banco: ' + err.message));
+                };
+
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    firebase.auth().createUserWithEmailAndPassword(email, senha)
+                        .then(() => {
+                            console.log('Usuário cadastrado com sucesso no Firebase Authentication!');
+                            saveToFirestore();
+                        })
+                        .catch((err) => {
+                            console.warn('Nota do Auth:', err.code, err.message);
+                            if (err.code === 'auth/email-already-in-use') {
+                                alert('Este e-mail já está registrado no Authentication. Salvando perfil...');
+                                saveToFirestore();
+                            } else if (err.code === 'auth/weak-password') {
+                                alert('A senha deve ter no mínimo 6 caracteres.');
+                            } else {
+                                alert('Erro no Firebase Auth: ' + err.message);
+                            }
+                        });
+                } else {
+                    saveToFirestore();
+                }
+            },
+            criarAgendamento: function(e) {
+                e.preventDefault();
+                if (!usuarioLogado) return;
+                const shiftVal = document.getElementById('ag-turno').value;
+                if (!shiftVal) {
+                    alert('Por favor, selecione um turno válido.');
+                    return;
+                }
+                const ag = {
+                    clientCpf: usuarioLogado.cpf,
+                    clientName: usuarioLogado.name,
+                    date: document.getElementById('ag-data').value,
+                    shift: shiftVal,
+                    lojaIndicou: document.getElementById('ag-loja-indicou')?.value || 'Nenhuma / Direto',
+                    status: 'Pendente',
+                    createdAt: new Date().toISOString()
+                };
+                dbFirestore.collection('schedules').add(ag).then(() => {
+                    alert('Solicitação de agendamento enviada com sucesso!');
+                    this.carregarAgendamentos();
+                    this.verificarTurnosDisponiveis(ag.date);
+                }).catch(err => alert('Erro ao agendar: ' + err.message));
+            },
+            carregarAgendamentos: function() {
+                if (!usuarioLogado) return;
+                const container = document.getElementById('c-meus-agendamentos');
+                container.innerHTML = '<p style="font-size:12px; color:#aaa;">Carregando seus treinos...</p>';
+                dbFirestore.collection('schedules').where('clientCpf', '==', usuarioLogado.cpf).get().then(snap => {
+                    if (snap.empty) {
+                        container.innerHTML = '<p style="font-size:13px; color:#888;">Nenhum agendamento encontrado.</p>';
+                        return;
+                    }
+                    container.innerHTML = '';
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        container.innerHTML += `
+                            <div class="item-list">
+                                <strong>📅 Data:</strong> ${formatarDataBR(d.date)}<br>
+                                <strong>⏰ Turno:</strong> ${d.shift}<br>
+                                <strong>Status:</strong> <span style="color:${d.status === 'Aprovado' ? '#4caf50' : d.status === 'Cancelado' ? '#f44336' : '#ff9800'}">${d.status}</span>
+                            </div>
+                        `;
+                    });
+                }).catch(err => console.error(err));
+            },
+            logout: function() {
+                usuarioLogado = null;
+                showView('c-login');
+            }
+        };
+    </script>
+</body>
+</html>
